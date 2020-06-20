@@ -8,7 +8,6 @@ library(readxl)
 ##creating function##
 
 
-
 back<-function(x){exp(x)/(1+exp(x))}
 
 
