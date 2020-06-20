@@ -11,6 +11,7 @@ library(readxl)
 back<-function(x){exp(x)/(1+exp(x))}
 
 
+
 ##Importing data##
 
 
