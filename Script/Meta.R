@@ -1,5 +1,9 @@
 
 ##Packages###
+
+if(!require(c(meta,bayesmeta,ggplot2,here,readxl,tidyverse))){
+  install.packages(c("meta","bayesmeta","ggplot2","here","readxl","tidyverse"))
+}
 library(meta)
 library(bayesmeta)
 library(ggplot2)
@@ -16,7 +20,7 @@ back<-function(x){exp(x)/(1+exp(x))}
 ##Importing data##
 
 
-claudia<-read_excel(here("Dados","claudia_ma.xlsx"))
+claudia<-read_excel(here("Data","claudia_ma.xlsx"))
 
 colnames(claudia)<-c("total","pos","prev","region","part","fresh","local","author")
 
@@ -287,4 +291,4 @@ for (i in 1:length(loc)){
 
 
 
-save.image(file.path(here(),"Resultados","resultados.RData",sep=""))
+save.image(here("Results","results.RData"))
