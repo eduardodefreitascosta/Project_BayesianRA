@@ -1,20 +1,33 @@
 
 ##Packages###
 
-if(!require(c(meta,bayesmeta,ggplot2,here,readxl,tidyverse))){
-  install.packages(c("meta","bayesmeta","ggplot2","here","readxl","tidyverse"))
-}
-library(meta)
-library(bayesmeta)
-library(ggplot2)
-library(here)
-library(readxl)
-library(tidyverse)
-##creating function##
+#Packages to be used
+packages<-c("meta","bayesmeta","ggplot2","here","readxl",
+            "tidyverse","grid","ggridges","ggthemes")
 
+# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}
+
+# Packages loading
+invisible(lapply(packages, library, character.only = TRUE))
+
+
+##creating function##
 
 back<-function(x){exp(x)/(1+exp(x))}
 
+
+
+#Set graphics
+theme_set(theme_minimal())
+install.packages("extrafont")
+library(extrafont)
+font_import()
+loadfonts(device="win")       #Register fonts for Windows bitmap output
+fonts() 
 
 
 ##Importing data##
@@ -29,21 +42,14 @@ colnames(claudia)<-c("total","pos","prev","region","part","fresh","local","autho
 
 crins<-escalc(measure = "PLO",xi=pos,ni=total,data=claudia,add.measure = T,slab = author)
 
-meta1<-bayesmeta(y=crins[,"yi"],sigma=sqrt(crins[,"vi"]),mu.prior.mean = 1,mu.prior.sd =4,tau.prior=function(t){dhalfnormal(t,scale=0.5)} ,labels = claudia$author)
+meta<-bayesmeta(y=crins[,"yi"],sigma=sqrt(crins[,"vi"]),
+                mu.prior.mean = 0,mu.prior.sd =4,tau.prior=function(t){dhalfnormal(t,scale=0.5)},labels = claudia$author)
 
-#Forest plot
-
-
-forest(meta1, atransf=back, xlab="Prevalence", at =(c(-8,-5,-2, 0, 2)),cex=0.8,xlim=c(-12,6),main=" ")
-text(-12, -0.5, "Author(s) and Year", pos = 4, cex=0.8)
-text(6, -0.5, "Prevalence [95% CI]", pos = 2, cex=0.8)
-text(0, -0.5, "Study Outcome", pos = 2, cex=0.8)
-abline(h=c(-length(crins$yi)-1.8,-length(crins$yi)-4.2,0))
 
 #density plot
 plot(1, type="n", xlab="Prevalence", ylab="Density", xlim=c(0.05, 0.3), ylim=c(0, 22))
 
-lines(density(back(rnorm(100000,meta1$summary[3,2],meta1$summary[4,2]))),col=1:6)
+lines(density(back(rnorm(100000,meta$summary[3,2],meta$summary[4,2]))),col=1:6)
 
 
 
@@ -59,12 +65,13 @@ for (i in 1:length(N)){
   
 crins[[i]]<-escalc(measure = "PLO",xi=pos,ni=total,data=claudia,add.measure = T,slab = author, subset = region==N[i])
 
-meta1[[i]]<-bayesmeta(y=crins[[i]][,"yi"],sigma=sqrt(crins[[i]][,"vi"]),mu.prior.mean = 1,mu.prior.sd =4,tau.prior=function(t){dhalfnormal(t,scale=0.5)},labels = claudia$author[claudia$region==N[i]] )
+meta1[[i]]<-bayesmeta(y=crins[[i]][,"yi"],sigma=sqrt(crins[[i]][,"vi"]),
+                      mu.prior.mean = 0,mu.prior.sd =4,
+                      tau.prior=function(t){dhalfnormal(t,scale=0.5)},labels = claudia$author[claudia$region==N[i]] )
 
 }
 
-
-
+names(meta1)<-id  
 
 data<-data.frame(matrix(rep(NA,10000*6), nrow=10000,ncol=6,byrow=T))
 
@@ -74,33 +81,36 @@ for (j in 1: length(N)){
 
   }
 }
- data$id<-seq(1:10000)
+colnames(data)<-id
+
+data$id<-seq(1:10000)
    
- colnames(data)<-id
- 
- data2 <- gather(data = data,
+#Density plots
+data2 <- gather(data = data,
                         key = "Pais",
                         value = "Prev",-id)
  
+ ggplot(data2,aes(x = back(Prev), y = Pais)) +
+   geom_density_ridges(from = 0, to = 0.7) +
+   #geom_boxplot(aes(fill = Pais), width = 0.06, outlier.shape = NA)+
+   xlab(substitute(paste("Posterior distribution of ",italic('Salmonella '),"sp."," prevalence") ))+
+   ylab("World geographic Country")+
+   theme(
+     axis.title.x = element_text( size=13),
+     axis.title.y = element_text( size=13))+
+   theme(text=element_text(family="Times New Roman", face="bold", size=15))+
+   theme(axis.text.x = element_text(vjust = 5))+
+   theme(legend.position = "none")+
+   scale_x_continuous(labels = scales::percent_format(accuracy = 1))
+   
+ 
 
- ggplot(data2, aes(x = Pais, y = back(Prev)*100)) +
-   geom_boxplot()+
-   scale_y_continuous(name = "Prevalence %",breaks = seq(0, 100, 15),
-                      limits=c(0, 85))+
-   scale_x_discrete(name = "Region")
- 
- 
-saida<-array(rep(NA,30),dim=c(6,5,1))
+#Outputs fomr the model
+output<-array(rep(NA,30),dim=c(6,5,1))
 
 for (i in 1:length(N)){
   
-lines(density(back(rnorm(10000,meta1[[i]]$summary[3,2],meta1[[i]]$summary[4,2]))),col=1,lty=N[i],cex.axis=1.5, cex.lab=1.5,lwd=3)
-
-
-legend(0.7, 6, bty='n', id, col=1,lty=1:6,lwd=3)
-
-
-saida[i, ,1]<-cbind( (meta1[[i]]$summary[3,2]),
+output[i, ,1]<-cbind((meta1[[i]]$summary[3,2]),
                      (meta1[[i]]$summary[4,2]),
                      (meta1[[i]]$summary[5,2]),
                      (meta1[[i]]$summary[2,2]),
@@ -109,6 +119,7 @@ saida[i, ,1]<-cbind( (meta1[[i]]$summary[3,2]),
 
 
 ##Cut vs carcass analysis##
+
 id1<-c("Carcass","Cut")
 meta2<-list()
 crins1<-list()
@@ -117,11 +128,12 @@ for (i in 1:length(corte)){
   
   crins1[[i]]<-escalc(measure = "PLO",xi=pos,ni=total,data=claudia, add=1/2,add.measure = T,slab = author, subset = part==corte[i])
   
-  meta2[[i]]<-bayesmeta(y=crins1[[i]][,"yi"],sigma=sqrt(crins1[[i]][,"vi"]),mu.prior.mean = 1,mu.prior.sd =4,tau.prior=function(t){dhalfnormal(t,scale=0.5)},labels = claudia$author[claudia$part==corte[i]],rel.tol.integrate = 1.45e-5 )
+  meta2[[i]]<-bayesmeta(y=crins1[[i]][,"yi"],sigma=sqrt(crins1[[i]][,"vi"]),
+                        mu.prior.mean = 0,mu.prior.sd =4,tau.prior=function(t){dhalfnormal(t,scale=0.5)},labels = claudia$author[claudia$part==corte[i]],rel.tol.integrate = 1.45e-5 )
   
 }
 
-
+names(meta2)<-id1
 
 data3<-data.frame(matrix(rep(NA,10000*2), nrow=10000,ncol=2,byrow=T))
 
@@ -136,36 +148,51 @@ for (j in 1:length(corte)){
 colnames(data3)<-id1
 data3$id<-seq(1:10000)
 
+
+#Density plots
+
 data4 <- gather(data = data3,
                 key = "Cut",
                 value = "Prev",-id)
 
+ggplot(data4,aes(x = back(Prev), y = Cut)) +
+  geom_density_ridges(from = 0.05, to = 0.3) +
+  #geom_boxplot(aes(fill = Cut), width = 0.06, outlier.shape = NA)+
+  xlab(substitute(paste("Posterior distribution of ",italic('Salmonella '),"sp."," prevalence") )) + 
+  ylab("Cuts")+
+  theme(
+    axis.title.x = element_text( size=13),
+    axis.title.y = element_text( size=13))+
+  theme(text=element_text(family="Times New Roman", face="bold", size=15))+
+  theme(axis.text.x = element_text(vjust = 5))+
+  #theme(axis.text.x = element_text(hjust = 5))+
+  theme(legend.position = "none")+
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1))
 
-ggplot(data4, aes(x = Cut, y = back(Prev)*100)) +
-  geom_boxplot()+
-  scale_y_continuous(name = "Prevalence %",breaks = seq(0, 100, 10),
-                     limits=c(5, 40))+
-  scale_x_discrete(name = "")
 
 
-saida1<-array(rep(NA,10),dim=c(2,5,1))
+
+#Outputs of the model
+
+output1<-array(rep(NA,10),dim=c(2,5,1))
 
 for (i in 1:length(corte)){
   
   
-  saida1[i, ,1]<-cbind((meta2[[i]]$summary[3,2]),
+  output1[i, ,1]<-cbind((meta2[[i]]$summary[3,2]),
                        (meta2[[i]]$summary[4,2]),
                        (meta2[[i]]$summary[5,2]),
                        (meta2[[i]]$summary[2,2]),
                        (meta2[[i]]$summary[6,2]) )
 }
 
+
+
 ##Local analysis##
-
-
 meta3<-list()
 crins2<-list()
 loc<-c(1,2)
+
 
 claudia1<-na.omit(claudia)
 
@@ -173,11 +200,12 @@ for (i in 1:length(loc)){
   
   crins2[[i]]<-escalc(measure = "PLO",xi=pos,ni=total,data=claudia1,subset = local==loc[i])
   
-  meta3[[i]]<-bayesmeta(y=na.omit(crins2[[i]][,"yi"]),sigma=sqrt(na.omit(crins2[[i]][,"vi"])),mu.prior.mean = 1,mu.prior.sd =4,tau.prior=function(t){dhalfnormal(t,scale=0.5)} )
+  meta3[[i]]<-bayesmeta(y=na.omit(crins2[[i]][,"yi"]),
+                        sigma=sqrt(na.omit(crins2[[i]][,"vi"])),mu.prior.mean = 0,mu.prior.sd =4,tau.prior=function(t){dhalfnormal(t,scale=0.5)} )
   
 }
 
-
+names(meta3)<-id2
 
 data5<-data.frame(matrix(rep(NA,10000*2), nrow=10000,ncol=2,byrow=T))
 id2<-c("Retail","Slaugterhouse")
@@ -196,24 +224,32 @@ data6 <- gather(data = data5,
                 key = "local",
                 value = "Prev",-id)
 
+#Density plot
 
-ggplot(data6, aes(x = local, y = back(Prev)*100)) +
-  geom_boxplot()+
-  scale_y_continuous(name = "Prevalence %",breaks = seq(0, 100, 10),
-                     limits=c(5, 40))+
-  scale_x_discrete(name = "")
+ggplot(data6,aes(x = back(Prev), y = local)) +
+  geom_density_ridges(from=0.05,to=0.35) +
+  #geom_boxplot(aes(fill = Cut), width = 0.06, outlier.shape = NA)+
+  xlab(substitute(paste("Posterior distribution of ",italic('Salmonella '),"sp."," prevalence") )) + 
+  ylab("Place of collection")+
+  theme(
+    axis.title.x = element_text( size=13),
+    axis.title.y = element_text( size=13))+
+  theme(text=element_text(family="Times New Roman", face="bold", size=15))+
+  theme(axis.text.x = element_text(vjust = 5))+
+  #theme(axis.text.x = element_text(hjust = 5))+
+  theme(legend.position = "none")+
+  scale_x_continuous(labels = scales::percent_format(accuracy = 0.1))
 
 
 
-
-
-saida2<-array(rep(NA,10),dim=c(2,5,1))
+#Outputs of the model
+output2<-array(rep(NA,10),dim=c(2,5,1))
 
 
 for (i in 1:length(loc)){
  
   
-  saida2[i, ,1]<-cbind((meta3[[i]]$summary[3,2]),
+  output2[i, ,1]<-cbind((meta3[[i]]$summary[3,2]),
                        (meta3[[i]]$summary[4,2]),
                        (meta3[[i]]$summary[5,2]),
                        (meta3[[i]]$summary[2,2]),
@@ -224,8 +260,6 @@ for (i in 1:length(loc)){
 
 
 ##fresh vs frozen##
-
-
 meta4<-list()
 crins3<-list()
 fro<-c(1,2)
@@ -236,10 +270,13 @@ for (i in 1:length(fro)){
   
   crins3[[i]]<-escalc(measure = "PLO",xi=pos,ni=total,data=claudia1,subset = fresh==loc[i])
   
-  meta4[[i]]<-bayesmeta(y=na.omit(crins3[[i]][,"yi"]),sigma=sqrt(na.omit(crins3[[i]][,"vi"])),mu.prior.mean = 1,mu.prior.sd =4,tau.prior=function(t){dhalfnormal(t,scale=0.5)} )
+  meta4[[i]]<-bayesmeta(y=na.omit(crins3[[i]][,"yi"]),
+                        sigma=sqrt(na.omit(crins3[[i]][,"vi"])),
+                        mu.prior.mean = 0,mu.prior.sd =4,tau.prior=function(t){dhalfnormal(t,scale=0.5)} )
   
 }
 
+names(meta4)<-id3
 
 data7<-data.frame(matrix(rep(NA,10000*2), nrow=10000,ncol=2,byrow=T))
 id3<-c("Fresh","Frozen")
@@ -258,30 +295,33 @@ data8 <- gather(data = data7,
                 key = "fro",
                 value = "Prev",-id)
 
+#Density plot
 
-ggplot(data8, aes(x = fro, y = back(Prev)*100)) +
-  geom_boxplot()+
-  scale_y_continuous(name = "Prevalence %",breaks = seq(0, 100, 10),
-                     limits=c(5, 40))+
-  scale_x_discrete(name = "")
+ggplot(data8,aes(x = back(Prev), y = fro)) +
+  geom_density_ridges(from = 0.05, to = 0.35) +
+  #geom_boxplot(aes(fill = Cut), width = 0.06, outlier.shape = NA)+
+  xlab(substitute(paste("Posterior distribution of ",italic('Salmonella '),"sp."," prevalence") )) + 
+  ylab("Physical state")+
+  theme(
+    axis.title.x = element_text( size=13),
+    axis.title.y = element_text( size=13))+
+  theme(text=element_text(family="Times New Roman", face="bold", size=15))+
+  theme(axis.text.x = element_text(vjust = 5))+
+  #theme(axis.text.x = element_text(hjust = 5))+
+  theme(legend.position = "none")+
+  scale_x_continuous(labels = scales::percent_format(accuracy = 0.1))
 
 
 
 
-
-saida3<-array(rep(NA,10),dim=c(2,5,1))
+#Outputs of the model
+output3<-array(rep(NA,10),dim=c(2,5,1))
 
 
 for (i in 1:length(loc)){
   
   
-  lines(density(back(rnorm(10000,meta4[[i]]$summary[3,2],meta4[[i]]$summary[4,2]))),col=loc[i])
-  
-  
-  legend(0.3, 9, bty='n', id2, col=c(1:i),lty=1)
-  
-  
-  saida3[i, ,1]<-cbind((meta4[[i]]$summary[3,2]),
+  output3[i, ,1]<-cbind((meta4[[i]]$summary[3,2]),
                        (meta4[[i]]$summary[4,2]),
                        (meta4[[i]]$summary[5,2]),
                        (meta4[[i]]$summary[2,2]),
