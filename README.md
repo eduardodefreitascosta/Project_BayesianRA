@@ -1,7 +1,7 @@
 
+# Note: This model is heavy. It will take several minutes running.
 
 ## This is a paper describying a Bayesian inference model for prevalence estimation discussed in a risk assessment context. The aim is to show how to run and interpret the Bayesian inference to use the output as a measurement of uncertainty in Risk assessment models.
-# Note: This model is heavy. It may takes several minutes.
 
 ## The paper is available online:
 
