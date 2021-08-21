@@ -3,7 +3,7 @@
 
 #Packages to be used
 packages<-c("meta","bayesmeta","ggplot2","here","readxl",
-            "tidyverse","grid","ggridges","ggthemes")
+            "tidyverse","grid","ggridges","ggthemes","extrafont")
 
 # Install packages not yet installed
 installed_packages <- packages %in% rownames(installed.packages())
@@ -23,11 +23,13 @@ back<-function(x){exp(x)/(1+exp(x))}
 
 #Set graphics
 theme_set(theme_minimal())
-install.packages("extrafont")
-library(extrafont)
-font_import()
-loadfonts(device="win")       #Register fonts for Windows bitmap output
-fonts() 
+#font_import()
+
+#loadfonts(device="win")
+
+#Register fonts for Windows bitmap output
+#fonts()
+
 
 
 ##Importing data##
@@ -89,8 +91,11 @@ data$id<-seq(1:10000)
 data2 <- gather(data = data,
                         key = "Pais",
                         value = "Prev",-id)
- 
- ggplot(data2,aes(x = back(Prev), y = Pais)) +
+
+tiff(here("Figures","Density_1.jpg"), units="in", width=8, height=5, res=300)
+
+ print(
+   ggplot(data2,aes(x = back(Prev), y = Pais)) +
    geom_density_ridges(from = 0, to = 0.7) +
    #geom_boxplot(aes(fill = Pais), width = 0.06, outlier.shape = NA)+
    xlab(substitute(paste("Posterior distribution of ",italic('Salmonella '),"sp."," prevalence") ))+
@@ -102,10 +107,11 @@ data2 <- gather(data = data,
    theme(axis.text.x = element_text(vjust = 5))+
    theme(legend.position = "none")+
    scale_x_continuous(labels = scales::percent_format(accuracy = 1))
-   
+ )
+ dev.off()
  
 
-#Outputs fomr the model
+#Outputs from the model
 output<-array(rep(NA,30),dim=c(6,5,1))
 
 for (i in 1:length(N)){
@@ -155,6 +161,8 @@ data4 <- gather(data = data3,
                 key = "Cut",
                 value = "Prev",-id)
 
+tiff(here("Figures","Density_2.jpg"), units="in", width=8, height=5, res=300)
+print(
 ggplot(data4,aes(x = back(Prev), y = Cut)) +
   geom_density_ridges(from = 0.05, to = 0.3) +
   #geom_boxplot(aes(fill = Cut), width = 0.06, outlier.shape = NA)+
@@ -168,7 +176,8 @@ ggplot(data4,aes(x = back(Prev), y = Cut)) +
   #theme(axis.text.x = element_text(hjust = 5))+
   theme(legend.position = "none")+
   scale_x_continuous(labels = scales::percent_format(accuracy = 1))
-
+)
+dev.off()
 
 
 
@@ -192,7 +201,7 @@ for (i in 1:length(corte)){
 meta3<-list()
 crins2<-list()
 loc<-c(1,2)
-
+id2<-c("Retail","Slaugterhouse")
 
 claudia1<-na.omit(claudia)
 
@@ -205,10 +214,11 @@ for (i in 1:length(loc)){
   
 }
 
+
 names(meta3)<-id2
 
 data5<-data.frame(matrix(rep(NA,10000*2), nrow=10000,ncol=2,byrow=T))
-id2<-c("Retail","Slaugterhouse")
+
 for (j in 1:length(loc)){
   for(i in 1:10000){
     data5[i,j]<-rnorm(1,meta3[[j]]$summary[3,2],meta3[[j]]$summary[4,2]) 
@@ -225,8 +235,10 @@ data6 <- gather(data = data5,
                 value = "Prev",-id)
 
 #Density plot
+tiff(here("Figures","Density_3.jpg"), units="in", width=8, height=5, res=300)
 
-ggplot(data6,aes(x = back(Prev), y = local)) +
+print(
+  ggplot(data6,aes(x = back(Prev), y = local)) +
   geom_density_ridges(from=0.05,to=0.35) +
   #geom_boxplot(aes(fill = Cut), width = 0.06, outlier.shape = NA)+
   xlab(substitute(paste("Posterior distribution of ",italic('Salmonella '),"sp."," prevalence") )) + 
@@ -239,7 +251,8 @@ ggplot(data6,aes(x = back(Prev), y = local)) +
   #theme(axis.text.x = element_text(hjust = 5))+
   theme(legend.position = "none")+
   scale_x_continuous(labels = scales::percent_format(accuracy = 0.1))
-
+)
+  dev.off()
 
 
 #Outputs of the model
@@ -263,6 +276,7 @@ for (i in 1:length(loc)){
 meta4<-list()
 crins3<-list()
 fro<-c(1,2)
+id3<-c("Fresh","Frozen")
 
 claudia1<-na.omit(claudia)
 
@@ -276,10 +290,10 @@ for (i in 1:length(fro)){
   
 }
 
+
 names(meta4)<-id3
 
 data7<-data.frame(matrix(rep(NA,10000*2), nrow=10000,ncol=2,byrow=T))
-id3<-c("Fresh","Frozen")
 for (j in 1:length(fro)){
   for(i in 1:10000){
     data7[i,j]<-rnorm(1,meta4[[j]]$summary[3,2],meta4[[j]]$summary[4,2]) 
@@ -297,6 +311,9 @@ data8 <- gather(data = data7,
 
 #Density plot
 
+tiff(here("Figures","Density_4.jpg"), units="in", width=8, height=5, res=300)
+
+print(
 ggplot(data8,aes(x = back(Prev), y = fro)) +
   geom_density_ridges(from = 0.05, to = 0.35) +
   #geom_boxplot(aes(fill = Cut), width = 0.06, outlier.shape = NA)+
@@ -310,7 +327,8 @@ ggplot(data8,aes(x = back(Prev), y = fro)) +
   #theme(axis.text.x = element_text(hjust = 5))+
   theme(legend.position = "none")+
   scale_x_continuous(labels = scales::percent_format(accuracy = 0.1))
-
+)
+dev.off()
 
 
 
