@@ -7,11 +7,6 @@
 ## This is a paper describying a Bayesian inference model for prevalence estimation discussed in a risk assessment context. The aim is to show how to run and interpret the Bayesian inference to use the output as a measurement of uncertainty in Risk assessment models.
 
 
-
-# This is a paper describying the growth and inactivarion of *Salmonella* spp. in salami in Brazilian industrial conditions .
-
-:microscope: :chart_with_upwards_trend:
-
 ## The paper is available online: 
 
 
