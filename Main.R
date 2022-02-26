@@ -1,13 +1,27 @@
 
-if(!require(here))
-  {install.packages("here")
+##Packages###
+
+#Packages to be used
+packages<-c("meta","bayesmeta","ggplot2","here","readxl",
+            "tidyverse","grid","ggridges","ggthemes","extrafont","gridExtra",
+            "ggridges","knitr","BRugs","coda","rjags","rgl","metafor", "brms",
+            "tidybayes","modelr","extraDistr")
+
+# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
 }
-library(here)
+
+# Packages loading
+invisible(lapply(packages, library, character.only = TRUE))
+
+
 
 dir.create(here("Results"))
 
 dir.create(here("Figures"))
 
 
-source(here("Script","Meta.R"))
+source(here("Script","Mixed_effects.R"))
 
