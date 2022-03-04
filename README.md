@@ -1,6 +1,6 @@
 
 
-[![DOI](https://zenodo.org/badge/DOI/10.1016/j.mran.2021.100177.svg)](https://www.sciencedirect.com/science/article/pii/S2352352221000190)
+[![DOI](https://zenodo.org/badge/DOI/10.1016/j.mran.2022.100205.svg)](https://www.sciencedirect.com/science/article/pii/S2352352222000056)
 
 # Note: This model is heavy. It will take several minutes (eventually hours) running.
 
