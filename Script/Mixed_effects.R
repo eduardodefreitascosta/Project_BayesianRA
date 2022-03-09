@@ -20,27 +20,27 @@ crins<-subset(crins,cond %in% c("0"))
 
 
 priors <-list(  base=c(prior(normal(0,100), class = Intercept),
-                       prior(gamma(0.01,0.01), class = sd),
+                       prior(gamma(0.001,0.001), class = sd),
                        prior(normal(0,100),class=b)),
            
                cen1= c(prior(normal(0,1), class = Intercept),
-                       prior(gamma(0.01,0.01), class = sd),
+                       prior(gamma(0.001,0.001), class = sd),
                        prior(normal(0,1),class=b)),
           
                cen2= c(prior(normal(-2,1), class = Intercept),
-                       prior(gamma(0.01,0.01), class = sd),
+                       prior(gamma(0.001,0.001), class = sd),
                        prior(normal(-2,1),class=b)),
           
                cen3= c(prior(normal(-2,100), class = Intercept),
-                       prior(gamma(0.01,0.01), class = sd),
+                       prior(gamma(0.001,0.001), class = sd),
                        prior(normal(-2,100),class=b)),
                
                cen4= c(prior(normal(2,1), class = Intercept),
-                       prior(gamma(0.01,0.01), class = sd),
+                       prior(gamma(0.001,0.001), class = sd),
                        prior(normal(2,1),class=b)),
                
                cen5= c(prior(normal(2,100), class = Intercept),
-                       prior(gamma(0.01,0.01), class = sd),
+                       prior(gamma(0.001,0.001), class = sd),
                        prior(normal(2,100),class=b))
 
            )

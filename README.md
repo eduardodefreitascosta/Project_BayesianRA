@@ -6,6 +6,7 @@
 
 ## This is a paper describying a Bayesian inference model for prevalence estimation discussed in a risk assessment context. The aim is to show how to run and interpret the Bayesian inference to use the output as a measurement of uncertainty in Risk assessment models.
 
+:chicken: :chart_with_downwards_trend:  :poultry_leg: 
 
 ## The paper is available online: 
 
