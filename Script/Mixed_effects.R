@@ -4,19 +4,18 @@
 
 ##Importing data##
 
-claudia<-read_excel(here("Data","claudia_ma2.xlsx"))
+claudia2<-read_excel(here("Data","claudia_ma2.xlsx"),sheet="Prevalencia-metaanalise")
 
-###############
-# brm library #
-###############
-crins$regiao<-factor(crins$regiao)
-crins$part<-factor(crins$part)
-crins$cond<-factor(crins$cond)
-crins$local<-factor(crins$local)
+# Logit transformation
+crins2<-escalc(xi=claudia2$pos,ni=claudia2$total,measure = "PLO")
+
+
+##Tidy into a dataframe
+crins$regiao<-factor(claudia$regiao)
+crins$part<-factor(claudia$part)
+crins$cond<-factor(claudia$cond)
+crins$local<-factor(claudia$local)
 crins$id<-1:104
-
-crins<-subset(crins,cond %in% c("0"))
-
 
 
 priors <-list(  base=c(prior(normal(0,100), class = Intercept),
@@ -52,7 +51,7 @@ for (j in 1:6){
 m.brm[[j]] <- brm(yi|se(vi) ~ relevel(regiao,ref="3")+part+local+cond+ (1|id),
               data = crins,
               prior = priors[[j]],
-              iter = 100000,
+              iter = 10000,
               chains = 2,
               thin=50
               )
@@ -96,8 +95,9 @@ posterior<-X%*%t(post)
 
 posterior2<-cbind.data.frame(posterior,X[,7:9])
 
-posterior2$country<-c(rep("N. America",8),rep("Brazil",8),rep("L. America",8),rep("Africa",8),rep("Asia",8),rep("Europe",8))
 
+colnames(posterior2)[2001:2003]<-c("Cuts","Frozen","Slaughterhouse")
+posterior2$country<-c(rep("N. America",8),rep("Brazil",8),rep("L. America",8),rep("Africa",8),rep("Asia",8),rep("Europe",8))
 posterior2$id<-1:48
 
 posterior3<-posterior2%>%
