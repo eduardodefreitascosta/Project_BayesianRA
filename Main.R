@@ -1,10 +1,11 @@
 
+
 ##Packages###
 
 #Packages to be used
 packages<-c("meta","bayesmeta","ggplot2","here","readxl",
             "tidyverse","grid","ggridges","ggthemes","extrafont","gridExtra",
-            "ggridges","knitr","BRugs","coda","rjags","rgl","metafor", "brms",
+            "ggridges","knitr","coda","rgl","metafor", "brms",
             "tidybayes","modelr","extraDistr")
 
 # Install packages not yet installed
