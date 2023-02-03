@@ -1,20 +1,19 @@
 
-
-
-
 ##Importing data##
 
 claudia2<-read_excel(here("Data","claudia_ma2.xlsx"),sheet="Prevalencia-metaanalise")
 
 # Logit transformation
-crins2<-escalc(xi=claudia2$pos,ni=claudia2$total,measure = "PLO")
+crins<-escalc(xi=claudia2$pos,ni=claudia2$total,measure = "PLO")
 
+#set back trans
+back<-function(x){1/(1+exp(-x))}
 
 ##Tidy into a dataframe
-crins$regiao<-factor(claudia$regiao)
-crins$part<-factor(claudia$part)
-crins$cond<-factor(claudia$cond)
-crins$local<-factor(claudia$local)
+crins$regiao<-factor(claudia2$regiao)
+crins$part<-factor(claudia2$part)
+crins$cond<-factor(claudia2$cond)
+crins$local<-factor(claudia2$local)
 crins$id<-1:104
 
 
@@ -51,7 +50,7 @@ for (j in 1:6){
 m.brm[[j]] <- brm(yi|se(vi) ~ relevel(regiao,ref="3")+part+local+cond+ (1|id),
               data = crins,
               prior = priors[[j]],
-              iter = 10000,
+              iter = 100000,
               chains = 2,
               thin=50
               )
@@ -95,8 +94,10 @@ posterior<-X%*%t(post)
 
 posterior2<-cbind.data.frame(posterior,X[,7:9])
 
+d1<-dim(posterior)[2]+1
+d2<-dim(posterior)[2]+3
 
-colnames(posterior2)[2001:2003]<-c("Cuts","Frozen","Slaughterhouse")
+colnames(posterior2)[d1:d2]<-c("Cuts","Frozen","Slaughterhouse")
 posterior2$country<-c(rep("N. America",8),rep("Brazil",8),rep("L. America",8),rep("Africa",8),rep("Asia",8),rep("Europe",8))
 posterior2$id<-1:48
 
@@ -126,7 +127,9 @@ ggplot(posterior3,aes(x=back(logit),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())+
         scale_x_continuous(labels = scales::percent_format(accuracy = 1))
+
 ggsave(here("Figures","Fig2.jpg"),dpi=300)
+
 
 table<-posterior3%>%
   group_by(country,Cuts,Frozen,Slaughterhouse)%>%
@@ -151,12 +154,12 @@ sens_sce<-list(
 )
 
 sens_sce1<-list(
-  Baseline=cbind.data.frame(scenario=rep("Baseline",2000),Baseline[,1:9]),
-  Scenario1=cbind.data.frame(scenario=rep("Scenario 1",2000),Scenario1[,1:9]),
-  Scenario2=cbind.data.frame(scenario=rep("Scenario 2",2000),Scenario2[,1:9]),
-  Scenario3=cbind.data.frame(scenario=rep("Scenario 3",2000),Scenario3[,1:9]),
-  Scenario4=cbind.data.frame(scenario=rep("Scenario 4",2000),Scenario4[,1:9]),
-  Scenario5=cbind.data.frame(scenario=rep("Scenario 5",2000),Scenario5[,1:9])
+  Baseline=cbind.data.frame(scenario=rep("Baseline",2000),sens_sce$Baseline[,1:9]),
+  Scenario1=cbind.data.frame(scenario=rep("Scenario 1",2000),sens_sce$Scenario1[,1:9]),
+  Scenario2=cbind.data.frame(scenario=rep("Scenario 2",2000),sens_sce$Scenario2[,1:9]),
+  Scenario3=cbind.data.frame(scenario=rep("Scenario 3",2000),sens_sce$Scenario3[,1:9]),
+  Scenario4=cbind.data.frame(scenario=rep("Scenario 4",2000),sens_sce$Scenario4[,1:9]),
+  Scenario5=cbind.data.frame(scenario=rep("Scenario 5",2000),sens_sce$Scenario5[,1:9])
 )
 
 
